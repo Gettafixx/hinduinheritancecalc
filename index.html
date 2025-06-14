@@ -18,41 +18,42 @@
         .step-indicator { transition: all 0.3s ease; }
         .step-indicator.active { background-color: #4f46e5; color: white; }
         .step-indicator.completed { background-color: #16a34a; color: white; }
-        .form-section { border-left: 2px solid #e5e7eb; padding-left: 1.5rem; margin-top: 1.5rem; }
+        .form-section { border-left: 2px solid #e5e7eb; padding-left: 1rem; margin-top: 1.5rem; }
+        @media (min-width: 640px) { .form-section { padding-left: 1.5rem; } }
         .help-tooltip { position: relative; display: inline-block; cursor: pointer; }
-        .help-tooltip .tooltiptext { visibility: hidden; width: 240px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -120px; opacity: 0; transition: opacity 0.3s; font-weight: normal; font-size: 0.875rem; }
+        .help-tooltip .tooltiptext { visibility: hidden; width: 220px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -110px; opacity: 0; transition: opacity 0.3s; font-weight: normal; font-size: 0.875rem; }
         .help-tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
         .chart-container { position: relative; width: 100%; max-width: 450px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
         .radio-btn-group button.selected { background-color: #4f46e5; color: white; border-color: #4f46e5; }
         .radio-btn-group button { background-color: #f3f4f6; color: #374151; border-color: #d1d5db; }
         .required-label::after { content: ' *'; color: #ef4444; }
         .property-card { transition: all 0.3s ease; }
-        .tab-btn { transition: all 0.2s ease-in-out; }
+        .tab-btn { transition: all 0.2s ease-in-out; font-size: 0.875rem; }
         .tab-btn.active { background-color: #4f46e5; color: white; }
         .tab-btn:not(.active) { background-color: #e5e7eb; color: #4b5563; }
         .flowchart-box { background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; }
         .flowchart-arrow { text-align: center; font-size: 1.5rem; color: #9ca3af; margin: 0.5rem 0; }
-        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        @media (min-width: 768px) { .chart-container { height: 400px; } .tab-btn { font-size: 1rem; } }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
 
-    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+    <div class="container mx-auto p-4 md:p-6 lg:p-8 max-w-4xl">
         <header class="text-center mb-6">
-            <h1 class="text-3xl md:text-4xl font-bold text-indigo-700">Hindu Inheritance Calculator</h1>
-            <p class="text-slate-600 mt-2">A comprehensive tool for understanding property distribution.</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">Hindu Inheritance Calculator</h1>
+            <p class="text-slate-600 mt-2 text-base">A comprehensive tool for understanding property distribution.</p>
         </header>
 
         <!-- Tab Controls -->
-        <div class="mb-6 flex justify-center p-1 bg-slate-200 rounded-xl">
-            <button id="tab-legal" class="tab-btn active w-1/3 py-2 px-4 rounded-lg font-semibold">Legal Calculator</button>
-            <button id="tab-percentage" class="tab-btn w-1/3 py-2 px-4 rounded-lg font-semibold">Quick Calculator</button>
-            <button id="tab-law" class="tab-btn w-1/3 py-2 px-4 rounded-lg font-semibold">The Law Explained</button>
+        <div class="mb-6 flex flex-col sm:flex-row justify-center p-1 bg-slate-200 rounded-xl">
+            <button id="tab-legal" class="tab-btn active w-full sm:w-1/3 py-2 px-4 rounded-lg font-semibold">Legal Calculator</button>
+            <button id="tab-percentage" class="tab-btn w-full sm:w-1/3 py-2 px-4 rounded-lg font-semibold mt-1 sm:mt-0">Quick Calculator</button>
+            <button id="tab-law" class="tab-btn w-full sm:w-1/3 py-2 px-4 rounded-lg font-semibold mt-1 sm:mt-0">The Law Explained</button>
         </div>
 
         <!-- Legal Calculator Content -->
         <div id="legal-calculator-content">
-            <main id="calculator-body" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+            <main id="calculator-body" class="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg">
                 <!-- Step Indicator -->
                 <div id="step-indicator-container" class="flex items-center justify-center space-x-2 md:space-x-4 mb-8 text-xs md:text-sm">
                     <div id="step-1-indicator" class="step-indicator active flex items-center justify-center w-8 h-8 rounded-full bg-slate-200">1</div>
@@ -198,7 +199,7 @@
 
         <!-- Quick Calculator Content -->
         <div id="quick-calculator-content" class="hidden">
-             <main class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+             <main class="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg">
                 <h2 class="text-2xl font-semibold mb-2">Quick Legal Calculator</h2>
                 <p class="text-slate-600 mb-6">Enter the number of living relatives to see a simplified legal distribution. This tool assumes all property is self-acquired and does not account for predeceased heirs.</p>
                 
@@ -241,7 +242,7 @@
         
         <!-- Law Explained Content -->
         <div id="law-explained-content" class="hidden">
-             <main class="bg-white p-6 md:p-8 rounded-2xl shadow-lg space-y-8">
+             <main class="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg space-y-8">
                 <div>
                     <h2 class="text-2xl font-semibold mb-2 text-indigo-700">The Law Explained: A Simple Guide</h2>
                     <p class="text-slate-600">This guide simplifies the key rules of the Hindu Succession Act, 1956, which applies when a Hindu, Sikh, Jain, or Buddhist dies without a valid will.</p>
@@ -273,7 +274,7 @@
                         <div class="col-span-2 border-t-2 border-dashed"></div>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                          <div class="flowchart-box bg-green-50 border-green-300">
                             <h4 class="text-lg font-semibold text-center text-green-800">If YES (Class I Heirs Exist)</h4>
                             <p class="text-green-700 text-center mt-2">The property is divided <strong class="font-bold">equally</strong> among all Class I heirs. They exclude everyone else.</p>
@@ -312,7 +313,7 @@
                         <div class="col-span-2 border-t-2 border-dashed"></div>
                     </div>
 
-                     <div class="grid grid-cols-2 gap-4">
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                          <div class="flowchart-box bg-green-50 border-green-300">
                             <h4 class="text-lg font-semibold text-center text-green-800">If YES</h4>
                             <p class="text-green-700 text-center mt-2">All her property is divided <strong class="font-bold">equally</strong> between her Husband and her Children (including children of predeceased children).</p>
@@ -347,7 +348,7 @@
              </main>
         </div>
         
-        <footer class="text-center mt-8 text-xs text-slate-500">
+        <footer class="text-center mt-8 text-xs text-slate-500 px-4">
             <p>This calculator provides an estimate for informational purposes only and does not constitute legal advice. The calculations are based on the general principles of the Hindu Succession Act, 1956. Please consult a qualified lawyer to address your specific situation.</p>
         </footer>
     </div>
@@ -616,12 +617,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function addPropertyCard() {
         propertyIdCounter++;
         const card = document.createElement('div');
-        card.className = 'property-card p-6 border rounded-xl bg-slate-50 relative';
+        card.className = 'property-card p-4 sm:p-6 border rounded-xl bg-slate-50 relative';
         card.id = `property-${propertyIdCounter}`;
         card.innerHTML = `
             <h3 class="font-bold text-lg mb-4">Property ${propertyIdCounter}</h3>
-            <button class="delete-property-btn absolute top-4 right-4 text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
-            <div class="space-y-6">
+            <button class="delete-property-btn absolute top-2 right-3 sm:top-4 sm:right-4 text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
+            <div class="space-y-4">
                 <div>
                     <label for="property-value-${propertyIdCounter}" class="font-semibold text-slate-700 block mb-1 required-label">Approximate Current Market Value (₹)</label>
                     <input type="number" id="property-value-${propertyIdCounter}" placeholder="e.g., 5000000" class="property-input w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" data-field="value">
@@ -735,7 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div id="class-II-heirs" class="mt-8">
                      <h3 class="text-xl font-semibold text-indigo-600">Class II Heirs</h3>
-                    <p class="text-sm text-slate-500 mb-4">Only provide these details if there are <strong class="text-red-600">NO Class I Heirs</strong> listed above.</p>
+                    <p class="text-sm text-slate-500 mb-4">This section will be hidden if any Class I Heirs exist.</p>
                     ${createRadioInput('father-alive', "Is the deceased's father alive?", "class-II-entry-I")}
                     <div id="class-II-entry-II-container" class="hidden">
                          ${createNumericInput('brothers', 'Number of brothers:', 'class-II-entry-II')}
@@ -779,6 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         attachFamilyTreeListeners();
+        checkHeirs(); // Initial check
     }
 
     function attachFamilyTreeListeners() {

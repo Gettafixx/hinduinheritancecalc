@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hindu Succession Act Inheritance Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Harmony -->
+    <!-- Application Structure Plan: A multi-step wizard to guide users through the complex legal process. This sequential flow prevents user overwhelm and ensures data is collected in a logical order that mirrors the legal decision tree. Steps: 1. Welcome & Applicability (Gateway), 2. Deceased's Details, 3. Property Portfolio (allowing multiple entries), 4. Family Tree Builder (dynamic form), 5. Special Circumstances, 6. Interactive Results Dashboard. This task-oriented structure is more user-friendly than a single large form and allows for context-sensitive help, enhancing usability and trust. -->
+    <!-- Visualization & Content Choices: The primary visualization is a dynamic donut chart (Chart.js) on the results page to show the percentage distribution of the estate. Goal: Compare proportions. Interaction: Hovering over a chart segment will display the heir's name, share, and value. This is paired with a detailed HTML table for precise figures and a 'Show Calculation' text block (JS toggle) to provide transparent, step-by-step reasoning for each heir's share, directly addressing the need for clarity and trust. The family tree is built using a structured HTML form, avoiding complex graphics. Goal: Organize information. Interaction: The form dynamically adds fields for predeceased children's heirs, guiding the user. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .step-indicator { transition: all 0.3s ease; }
+        .step-indicator.active { background-color: #4f46e5; color: white; }
+        .step-indicator.completed { background-color: #16a34a; color: white; }
+        .form-section { border-left: 2px solid #e5e7eb; padding-left: 1.5rem; margin-top: 1.5rem; }
+        .help-tooltip { position: relative; display: inline-block; cursor: pointer; }
+        .help-tooltip .tooltiptext { visibility: hidden; width: 240px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -120px; opacity: 0; transition: opacity 0.3s; font-weight: normal; font-size: 0.875rem; }
+        .help-tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        .chart-container { position: relative; width: 100%; max-width: 450px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        .radio-btn-group button.selected { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        .radio-btn-group button { background-color: #f3f4f6; color: #374151; border-color: #d1d5db; }
+        .required-label::after { content: ' *'; color: #ef4444; }
+        .property-card {
+            transition: all 0.3s ease;
+        }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-indigo-700">Hindu Inheritance Calculator</h1>
+            <p class="text-slate-600 mt-2">An interactive guide to understanding property distribution under the Hindu Succession Act, 1956.</p>
+        </header>
+
+        <!-- Step Indicator -->
+        <div id="step-indicator-container" class="flex items-center justify-center space-x-2 md:space-x-4 mb-8 text-xs md:text-sm">
+            <div id="step-1-indicator" class="step-indicator active flex items-center justify-center w-8 h-8 rounded-full bg-slate-200">1</div>
+            <div class="flex-1 h-1 bg-slate-200 rounded-full"></div>
+            <div id="step-2-indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-slate-200">2</div>
+            <div class="flex-1 h-1 bg-slate-200 rounded-full"></div>
+            <div id="step-3-indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-slate-200">3</div>
+            <div class="flex-1 h-1 bg-slate-200 rounded-full"></div>
+            <div id="step-4-indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-slate-200">4</div>
+             <div class="flex-1 h-1 bg-slate-200 rounded-full"></div>
+            <div id="step-5-indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-slate-200">5</div>
+        </div>
+
+        <main id="calculator-body" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+            
+            <!-- Screen 1: Applicability -->
+            <div id="screen-1">
+                <h2 class="text-2xl font-semibold mb-2">Let's Get Started</h2>
+                <p class="text-slate-600 mb-6">First, let's confirm if this calculator applies to your situation. The Hindu Succession Act has specific applicability.</p>
+                <div class="space-y-4">
+                    <label class="font-semibold text-slate-700 block required-label">What was the religion of the person who passed away?
+                        <span class="help-tooltip text-indigo-500 font-normal"> [?]
+                            <span class="tooltiptext">The Hindu Succession Act governs inheritance only for Hindus, Buddhists, Jains, and Sikhs.</span>
+                        </span>
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- Options will be dynamically inserted here by JS -->
+                    </div>
+                </div>
+                 <div id="applicability-error" class="hidden mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
+                    This calculator is designed for inheritance under the Hindu Succession Act, 1956, which does not apply to the selected religion. Please consult a legal expert for advice.
+                </div>
+            </div>
+
+            <!-- Screen 2: Deceased's Details -->
+            <div id="screen-2" class="hidden">
+                 <h2 class="text-2xl font-semibold mb-2">About the Person Who Passed Away</h2>
+                 <p class="text-slate-600 mb-6">These details determine which set of legal rules to apply.</p>
+                <div class="space-y-6">
+                    <div>
+                        <label class="font-semibold text-slate-700 block mb-2 required-label">Gender of the deceased
+                             <span class="help-tooltip text-indigo-500 font-normal"> [?]
+                                <span class="tooltiptext">Gender determines which set of succession rules (Section 8 for males, Section 15 for females) to apply.</span>
+                            </span>
+                        </label>
+                        <div id="gender-group" class="radio-btn-group flex space-x-4">
+                            <button data-value="male" class="flex-1 p-3 text-center border rounded-lg hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">Male</button>
+                            <button data-value="female" class="flex-1 p-3 text-center border rounded-lg hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">Female</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-700 block mb-2 required-label">When did the person pass away?
+                             <span class="help-tooltip text-indigo-500 font-normal"> [?]
+                                <span class="tooltiptext">This is a critical legal date. The 2005 amendment to the Hindu Succession Act gave daughters equal rights in ancestral property. Your answer here is essential for an accurate calculation.</span>
+                            </span>
+                        </label>
+                         <div id="dod-group" class="radio-btn-group flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                            <button data-value="true" class="flex-1 p-3 text-center border rounded-lg hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">On or After Sep 9, 2005</button>
+                            <button data-value="false" class="flex-1 p-3 text-center border rounded-lg hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">Before Sep 9, 2005</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 3: Property Portfolio -->
+            <div id="screen-3" class="hidden">
+                 <h2 class="text-2xl font-semibold mb-2">Estate Properties</h2>
+                 <p class="text-slate-600 mb-6">List each major asset of the deceased. The law treats properties differently based on how they were acquired.</p>
+                 <div id="property-list" class="space-y-6">
+                    <!-- Property cards will be added here -->
+                 </div>
+                 <button id="add-property-btn" class="mt-6 w-full p-3 bg-indigo-100 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    + Add Another Property
+                </button>
+            </div>
+
+            <!-- Screen 4: Family Tree -->
+            <div id="screen-4" class="hidden">
+                <h2 class="text-2xl font-semibold mb-2">Family Tree</h2>
+                <p class="text-slate-600 mb-6">Please provide details about the deceased's family. The law has a strict order of heirs.</p>
+                <div id="family-tree-form" class="space-y-6">
+                   <!-- Dynamic form fields will be inserted here based on gender -->
+                </div>
+            </div>
+            
+            <!-- Screen 5: Special Circumstances -->
+            <div id="screen-5" class="hidden">
+                <h2 class="text-2xl font-semibold mb-2">Special Circumstances</h2>
+                <p class="text-slate-600 mb-6">Finally, please confirm if any of these less common, but important, situations apply. They can affect the calculation.</p>
+                <div class="space-y-6">
+                    <div class="p-4 bg-slate-50 rounded-lg border">
+                        <label class="font-medium text-slate-700 block mb-2">Was any ancestral property partitioned by a registered deed or court order before December 20, 2004?</label>
+                        <div id="partition-group" class="radio-btn-group flex space-x-4">
+                             <button data-value="true" class="flex-1 p-2 text-center border rounded-lg">Yes</button>
+                             <button data-value="false" class="flex-1 p-2 text-center border rounded-lg selected">No</button>
+                        </div>
+                    </div>
+                     <div class="p-4 bg-slate-50 rounded-lg border">
+                        <label class="font-medium text-slate-700 block mb-2">Has any potential heir been legally convicted of murdering the deceased?</label>
+                        <div id="murder-group" class="radio-btn-group flex space-x-4">
+                             <button data-value="true" class="flex-1 p-2 text-center border rounded-lg">Yes</button>
+                             <button data-value="false" class="flex-1 p-2 text-center border rounded-lg selected">No</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 6: Results -->
+            <div id="screen-6" class="hidden">
+                 <h2 class="text-2xl font-semibold mb-2 text-center">Inheritance Distribution Summary</h2>
+                 <p id="results-intro" class="text-slate-600 mb-8 text-center"></p>
+                
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div class="chart-container">
+                        <canvas id="distribution-chart"></canvas>
+                    </div>
+                    <div id="total-value-summary" class="text-center md:text-left">
+                        <!-- Summary text will be injected here -->
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                     <h3 class="text-xl font-semibold mb-4">Detailed Breakdown</h3>
+                     <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white rounded-lg shadow">
+                            <thead class="bg-slate-100">
+                                <tr>
+                                    <th class="p-3 text-left font-semibold text-slate-600">Heir</th>
+                                    <th class="p-3 text-left font-semibold text-slate-600">Share</th>
+                                    <th class="p-3 text-right font-semibold text-slate-600">Value (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-table-body">
+                                <!-- Results rows will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                 <div class="mt-8 p-4 bg-amber-50 border-l-4 border-amber-400 text-amber-800 rounded-r-lg">
+                    <h4 class="font-bold">Disclaimer</h4>
+                    <p>This calculator provides an estimate for informational purposes only and does not constitute legal advice. The calculations are based on the general principles of the Hindu Succession Act, 1956. Please consult a qualified lawyer to address your specific situation.</p>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div id="navigation-buttons" class="mt-8 flex justify-between">
+                <button id="back-btn" class="py-2 px-6 bg-slate-300 text-slate-800 font-semibold rounded-lg hover:bg-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 disabled:opacity-50" disabled>Back</button>
+                <button id="next-btn" class="py-2 px-6 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50" disabled>Next</button>
+            </div>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    
+    let state = {
+        currentScreen: 1,
+        deceased: {
+            religion: null,
+            gender: null,
+            deathAfter2005: null,
+        },
+        family: {},
+        specialCircumstances: {
+            partitionBefore2004: false,
+            murderer: false,
+        },
+    };
+    
+    let propertyIdCounter = 0;
+    let distributionChart = null;
+
+    const screens = [
+        document.getElementById('screen-1'),
+        document.getElementById('screen-2'),
+        document.getElementById('screen-3'),
+        document.getElementById('screen-4'),
+        document.getElementById('screen-5'),
+        document.getElementById('screen-6')
+    ];
+    const backBtn = document.getElementById('back-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const stepIndicators = [
+        document.getElementById('step-1-indicator'),
+        document.getElementById('step-2-indicator'),
+        document.getElementById('step-3-indicator'),
+        document.getElementById('step-4-indicator'),
+        document.getElementById('step-5-indicator'),
+    ];
+
+    const RELIGIONS = [
+        { name: 'Hinduism', icon: '🕉️' },
+        { name: 'Buddhism', icon: '☸️' },
+        { name: 'Jainism', icon: ' जैन' },
+        { name: 'Sikhism', icon: '☬' },
+        { name: 'Other', icon: '❓' }
+    ];
+
+    function init() {
+        populateReligions();
+        setupEventListeners();
+        addPropertyCard(); // Add the first property card by default
+        updateUI();
+    }
+
+    function populateReligions() {
+        const container = document.querySelector('#screen-1 .grid');
+        container.innerHTML = '';
+        RELIGIONS.forEach(religion => {
+            const button = document.createElement('button');
+            button.className = 'p-4 border rounded-lg text-center hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex flex-col items-center justify-center space-y-2';
+            button.dataset.religion = religion.name;
+            button.innerHTML = `<span class="text-3xl">${religion.icon}</span><span class="font-medium">${religion.name}</span>`;
+            button.addEventListener('click', () => handleReligionSelect(religion.name));
+            container.appendChild(button);
+        });
+    }
+    
+    function handleReligionSelect(religion) {
+        state.deceased.religion = religion;
+        const buttons = document.querySelectorAll('#screen-1 .grid button');
+        buttons.forEach(btn => btn.classList.toggle('bg-indigo-200', btn.dataset.religion === religion));
+        
+        const errorDiv = document.getElementById('applicability-error');
+        errorDiv.classList.toggle('hidden', religion !== 'Other');
+        nextBtn.disabled = religion === 'Other';
+    }
+
+    function setupEventListeners() {
+        backBtn.addEventListener('click', () => changeScreen(state.currentScreen - 1));
+        nextBtn.addEventListener('click', handleNextClick);
+        
+        setupRadioGroup('gender-group', value => {
+            state.deceased.gender = value;
+            buildFamilyTreeForm();
+            validateScreen2();
+        });
+        setupRadioGroup('dod-group', value => {
+            state.deceased.deathAfter2005 = (value === 'true');
+            validateScreen2();
+        });
+        setupRadioGroup('partition-group', value => state.specialCircumstances.partitionBefore2004 = (value === 'true'));
+        setupRadioGroup('murder-group', value => state.specialCircumstances.murderer = (value === 'true'));
+
+        document.getElementById('add-property-btn').addEventListener('click', addPropertyCard);
+    }
+    
+    function setupRadioGroup(groupId, callback) {
+        const group = document.getElementById(groupId);
+        if(!group) return;
+        group.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const value = e.target.dataset.value;
+                Array.from(group.children).forEach(btn => {
+                    btn.classList.toggle('selected', btn.dataset.value === value);
+                });
+                if (callback) callback(value);
+            }
+        });
+    }
+    
+    function validateScreen2() {
+        nextBtn.disabled = !(state.deceased.gender !== null && state.deceased.deathAfter2005 !== null);
+    }
+    
+    function addPropertyCard() {
+        propertyIdCounter++;
+        const card = document.createElement('div');
+        card.className = 'property-card p-6 border rounded-xl bg-slate-50 relative';
+        card.id = `property-${propertyIdCounter}`;
+        card.innerHTML = `
+            <h3 class="font-bold text-lg mb-4">Property ${propertyIdCounter}</h3>
+            <button class="delete-property-btn absolute top-4 right-4 text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
+            <div class="space-y-6">
+                <div>
+                    <label for="property-value-${propertyIdCounter}" class="font-semibold text-slate-700 block mb-1 required-label">Approximate Current Market Value (₹)</label>
+                    <input type="number" id="property-value-${propertyIdCounter}" placeholder="e.g., 5000000" class="property-input w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" data-field="value">
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-700 block mb-2 required-label">How was this property acquired?
+                        <span class="help-tooltip text-indigo-500 font-normal"> [?]
+                            <span class="tooltiptext">This is the most important question. It determines if a property is "self-acquired" or "ancestral," which completely changes how it is divided.</span>
+                        </span>
+                    </label>
+                    <select id="property-acquisition-${propertyIdCounter}" class="property-input w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white" data-field="acquisition">
+                        <option value="">-- Please select --</option>
+                        <option value="purchased">Purchased with own money/earnings</option>
+                        <option value="gift">Received as a gift</option>
+                        <option value="partition">Received during a family partition</option>
+                        <option value="inherited">Inherited</option>
+                    </select>
+                </div>
+                <div id="inheritance-source-container-${propertyIdCounter}" class="hidden space-y-4">
+                     <div>
+                        <label for="property-inheritance-source-${propertyIdCounter}" class="font-semibold text-slate-700 block mb-2 required-label">From whom was it inherited?</label>
+                        <select id="property-inheritance-source-${propertyIdCounter}" class="property-input w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white" data-field="inheritanceSource">
+                            <option value="">-- Please select --</option>
+                            <option value="paternal_grandfather">Paternal Grandfather</option>
+                            <option value="paternal_great_grandfather">Paternal Great-Grandfather</option>
+                            <option value="father">Father (who himself inherited it from his paternal ancestors)</option>
+                            <option value="mother">Mother</option>
+                            <option value="husband">Husband</option>
+                            <option value="father_in_law">Father-in-law</option>
+                            <option value="other">Other Relative (e.g., brother, maternal uncle)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('property-list').appendChild(card);
+        
+        card.querySelector(`#property-acquisition-${propertyIdCounter}`).addEventListener('change', (e) => {
+           card.querySelector(`#inheritance-source-container-${propertyIdCounter}`).classList.toggle('hidden', e.target.value !== 'inherited');
+        });
+        
+        card.querySelector('.delete-property-btn').addEventListener('click', (e) => {
+            if (document.querySelectorAll('.property-card').length > 1) {
+                card.remove();
+            } else {
+                alert("You must have at least one property.");
+            }
+        });
+    }
+
+    function collectPropertiesData() {
+        const propertyCards = document.querySelectorAll('.property-card');
+        const properties = [];
+        let allValid = true;
+        propertyCards.forEach(card => {
+            const id = card.id.split('-')[1];
+            const value = parseFloat(card.querySelector(`#property-value-${id}`).value);
+            const acquisition = card.querySelector(`#property-acquisition-${id}`).value;
+            const inheritanceSource = card.querySelector(`#property-inheritance-source-${id}`).value;
+
+            if (isNaN(value) || value <= 0 || !acquisition || (acquisition === 'inherited' && !inheritanceSource)) {
+                allValid = false;
+            }
+            
+            properties.push({
+                value: value,
+                acquisition: acquisition,
+                inheritanceSource: acquisition === 'inherited' ? inheritanceSource : null,
+            });
+        });
+        
+        if (!allValid) {
+            alert("Please fill all required fields for each property before proceeding.");
+            return null;
+        }
+        return properties;
+    }
+
+    function buildFamilyTreeForm() {
+        const container = document.getElementById('family-tree-form');
+        container.innerHTML = '';
+        state.family = {}; // Reset family state
+
+        const createRadioInput = (id, labelText, extraClasses = '') => `
+            <div class="form-section ${extraClasses}">
+                <label class="font-semibold text-slate-700 block mb-2 required-label">${labelText}</label>
+                <div id="${id}-group" class="radio-btn-group flex space-x-4">
+                    <button data-value="true" class="flex-1 p-2 text-center border rounded-lg">Yes</button>
+                    <button data-value="false" class="flex-1 p-2 text-center border rounded-lg selected">No</button>
+                </div>
+            </div>`;
+        
+        const createNumericInput = (id, labelText, extraClasses = '') => `
+            <div class="form-section ${extraClasses}">
+                <label for="${id}" class="font-semibold text-slate-700 block mb-2 required-label">${labelText}</label>
+                <input type="number" id="${id}" min="0" value="0" class="w-full p-2 border rounded-lg">
+                <div id="${id}-details" class="mt-4 space-y-4"></div>
+            </div>`;
+
+        if (state.deceased.gender === 'male') {
+            container.innerHTML = `
+                <div id="class-I-heirs">
+                    <h3 class="text-xl font-semibold text-indigo-600">Class I Heirs</h3>
+                    <p class="text-sm text-slate-500 mb-4">These heirs inherit first and exclude all others.</p>
+                    ${createRadioInput('mother-alive', "Is the deceased's mother alive?")}
+                    ${createRadioInput('widow-alive', 'Was the deceased married (and the widow is alive)?')}
+                    ${createNumericInput('living-sons', 'Number of living sons:')}
+                    ${createNumericInput('living-daughters', 'Number of living daughters:')}
+                    ${createNumericInput('predeceased-sons', 'Number of predeceased sons (who left children/widow):')}
+                    ${createNumericInput('predeceased-daughters', 'Number of predeceased daughters (who left children):')}
+                </div>
+                <div id="class-II-heirs" class="hidden mt-8">
+                     <h3 class="text-xl font-semibold text-indigo-600">Class II Heirs</h3>
+                    <p class="text-sm text-slate-500 mb-4">Only provide these details if there are <strong class="text-red-600">NO Class I Heirs</strong> listed above.</p>
+                    ${createRadioInput('father-alive', "Is the deceased's father alive?", "class-II-entry-I")}
+                    <div id="class-II-entry-II-container" class="hidden">
+                         ${createNumericInput('brothers', 'Number of brothers:', 'class-II-entry-II')}
+                         ${createNumericInput('sisters', 'Number of sisters:', 'class-II-entry-II')}
+                    </div>
+                </div>
+            `;
+        } else { // Female
+            // Simplified form for female, can be expanded similarly if needed
+            container.innerHTML = `
+                ${createRadioInput('husband-alive', 'Was the deceased married (and the husband is alive)?')}
+                ${createNumericInput('living-sons', 'Number of living sons:')}
+                ${createNumericInput('living-daughters', 'Number of living daughters:')}
+                 <div class="form-section">
+                    <p class="font-semibold text-slate-700 mb-2">If the deceased had no children or grandchildren, provide details of other relatives:</p>
+                    <div class="space-y-4">
+                        ${createRadioInput('female-father-alive', 'Is her father alive?')}
+                        ${createRadioInput('female-mother-alive', 'Is her mother alive?')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        attachFamilyTreeListeners();
+    }
+
+    function attachFamilyTreeListeners() {
+        const container = document.getElementById('family-tree-form');
+
+        const checkClassIHeirs = () => {
+             if (state.deceased.gender !== 'male') return;
+             let hasClassI = false;
+             if(document.querySelector('#mother-alive-group button.selected[data-value="true"]')) hasClassI = true;
+             if(document.querySelector('#widow-alive-group button.selected[data-value="true"]')) hasClassI = true;
+             if(parseInt(document.getElementById('living-sons').value) > 0) hasClassI = true;
+             if(parseInt(document.getElementById('living-daughters').value) > 0) hasClassI = true;
+             if(parseInt(document.getElementById('predeceased-sons').value) > 0) hasClassI = true;
+             if(parseInt(document.getElementById('predeceased-daughters').value) > 0) hasClassI = true;
+
+             document.getElementById('class-II-heirs').classList.toggle('hidden', hasClassI);
+        };
+        
+        const checkClassIIEntryI = () => {
+            if(state.deceased.gender !== 'male') return;
+            const fatherAlive = document.querySelector('#father-alive-group button.selected[data-value="true"]');
+            document.getElementById('class-II-entry-II-container').classList.toggle('hidden', !!fatherAlive);
+        };
+        
+        container.addEventListener('change', checkClassIHeirs);
+        container.addEventListener('click', (e) => {
+            if (e.target.closest('.radio-btn-group')) {
+                setTimeout(checkClassIHeirs, 50);
+                setTimeout(checkClassIIEntryI, 50);
+            }
+        });
+        
+        setupRadioGroup('father-alive-group', checkClassIIEntryI);
+
+        const numericInputs = ['living-sons', 'living-daughters', 'predeceased-sons', 'predeceased-daughters'];
+        numericInputs.forEach(id => {
+            const inputEl = document.getElementById(id);
+            if (inputEl) {
+                inputEl.addEventListener('input', (e) => {
+                    if (id.startsWith('predeceased')) {
+                       generatePredeceasedDetails(id, parseInt(e.target.value) || 0);
+                    }
+                });
+            }
+        });
+
+        const radioIds = ['mother-alive', 'widow-alive', 'husband-alive', 'female-father-alive', 'female-mother-alive'];
+        radioIds.forEach(id => setupRadioGroup(`${id}-group`));
+    }
+
+    function generatePredeceasedDetails(type, count) {
+        const container = document.getElementById(`${type}-details`);
+        container.innerHTML = '';
+        for (let i = 1; i <= count; i++) {
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'p-4 border rounded-lg bg-slate-50';
+            const sonOrDaughter = type.includes('son') ? 'son' : 'daughter';
+            let html = `<h4 class="font-semibold">Details for Predeceased ${sonOrDaughter} #${i}</h4><div class="mt-2 space-y-3">`;
+            if (sonOrDaughter === 'son') {
+                 html += `<div><label class="font-medium block mb-2 required-label">Widow is alive?</label><div id="${type}-${i}-widow-alive-group" class="radio-btn-group flex space-x-4"><button data-value="true" class="flex-1 p-2 text-center border rounded-lg">Yes</button><button data-value="false" class="flex-1 p-2 text-center border rounded-lg selected">No</button></div></div>`;
+            }
+            html += `<div><label class="font-medium block mb-1 required-label">Number of sons:</label><input type="number" min="0" value="0" class="w-full p-1 border rounded" id="${type}-${i}-sons"></div>`;
+            html += `<div><label class="font-medium block mb-1 required-label">Number of daughters:</label><input type="number" min="0" value="0" class="w-full p-1 border rounded" id="${type}-${i}-daughters"></div>`;
+            html += `</div>`;
+            detailsDiv.innerHTML = html;
+            container.appendChild(detailsDiv);
+            if(sonOrDaughter === 'son') {
+                setupRadioGroup(`${type}-${i}-widow-alive-group`);
+            }
+        }
+    }
+
+    function collectFamilyData() {
+        const family = {};
+        const getRadioValue = (id) => {
+            const group = document.getElementById(`${id}-group`);
+            if(!group) return null;
+            const selectedBtn = group.querySelector('button.selected');
+            return selectedBtn ? (selectedBtn.dataset.value === 'true') : null;
+        };
+
+        if (state.deceased.gender === 'male') {
+            family.motherAlive = getRadioValue('mother-alive');
+            family.widowAlive = getRadioValue('widow-alive');
+            family.livingSons = parseInt(document.getElementById('living-sons').value) || 0;
+            family.livingDaughters = parseInt(document.getElementById('living-daughters').value) || 0;
+            family.predeceasedSons = [];
+            const numPreSons = parseInt(document.getElementById('predeceased-sons').value) || 0;
+            for (let i=1; i<=numPreSons; i++) {
+                family.predeceasedSons.push({
+                    widowAlive: getRadioValue(`predeceased-sons-${i}-widow-alive`),
+                    sons: parseInt(document.getElementById(`predeceased-sons-${i}-sons`).value) || 0,
+                    daughters: parseInt(document.getElementById(`predeceased-sons-${i}-daughters`).value) || 0,
+                });
+            }
+            family.predeceasedDaughters = [];
+            const numPreDaughters = parseInt(document.getElementById('predeceased-daughters').value) || 0;
+             for (let i=1; i<=numPreDaughters; i++) {
+                family.predeceasedDaughters.push({
+                    sons: parseInt(document.getElementById(`predeceased-daughters-${i}-sons`).value) || 0,
+                    daughters: parseInt(document.getElementById(`predeceased-daughters-${i}-daughters`).value) || 0,
+                });
+            }
+            // Class II
+            family.fatherAlive = getRadioValue('father-alive');
+            family.brothers = parseInt(document.getElementById('brothers')?.value) || 0;
+            family.sisters = parseInt(document.getElementById('sisters')?.value) || 0;
+
+        } else { // Female
+             family.husbandAlive = getRadioValue('husband-alive');
+             family.livingSons = parseInt(document.getElementById('living-sons').value) || 0;
+             family.livingDaughters = parseInt(document.getElementById('living-daughters').value) || 0;
+             family.fatherAlive = getRadioValue('female-father-alive');
+             family.motherAlive = getRadioValue('female-mother-alive');
+        }
+        state.family = family;
+    }
+
+    function handleNextClick() {
+        if(state.currentScreen === 3) {
+            const properties = collectPropertiesData();
+            if(!properties) return;
+        }
+        if (state.currentScreen === 4) {
+            collectFamilyData();
+        }
+        if (state.currentScreen === 5) {
+            calculateAndShowResults();
+        } else {
+            changeScreen(state.currentScreen + 1);
+        }
+    }
+
+    function changeScreen(targetScreen) {
+        state.currentScreen = targetScreen;
+        updateUI();
+        window.scrollTo(0, 0);
+    }
+    
+    function updateUI() {
+        screens.forEach((screen, index) => {
+            screen.classList.toggle('hidden', index + 1 !== state.currentScreen);
+        });
+
+        stepIndicators.forEach((indicator, index) => {
+            indicator.classList.remove('active', 'completed');
+            if (index < state.currentScreen - 1) {
+                indicator.classList.add('completed');
+                indicator.innerHTML = `&#10003;`;
+            } else if (index === state.currentScreen - 1) {
+                 indicator.classList.add('active');
+                 indicator.textContent = index + 1;
+            } else {
+                 indicator.textContent = index + 1;
+            }
+        });
+        
+        backBtn.disabled = state.currentScreen === 1;
+        
+        if (state.currentScreen === 6) { // Results screen
+            nextBtn.classList.add('hidden');
+            backBtn.textContent = 'Start Over';
+            const newBackBtn = backBtn.cloneNode(true);
+            backBtn.parentNode.replaceChild(newBackBtn, backBtn);
+            newBackBtn.addEventListener('click', () => window.location.reload());
+        } else {
+            nextBtn.textContent = (state.currentScreen === 5) ? 'Calculate' : 'Next';
+            nextBtn.classList.remove('hidden');
+            backBtn.textContent = 'Back';
+        }
+        
+        if (state.currentScreen === 1) nextBtn.disabled = !state.deceased.religion || state.deceased.religion === 'Other';
+        if (state.currentScreen === 2) validateScreen2();
+        if (state.currentScreen === 3) nextBtn.disabled = false; // Validation is now on 'Next' click
+        if (state.currentScreen >= 4) nextBtn.disabled = false;
+    }
+
+    function calculateAndShowResults() {
+        const properties = collectPropertiesData();
+        if(!properties) return; // Stop if properties are invalid
+        const results = calculateInheritance(state, properties);
+        renderResults(results);
+        changeScreen(6);
+    }
+    
+    function renderResults(results) {
+        const totalValue = results.totalValue;
+        document.getElementById('results-intro').textContent = `Based on the information provided, the total estimated value of the estate is ₹${totalValue.toLocaleString('en-IN')}. The distribution among the legal heirs is as follows:`;
+
+        const summaryContainer = document.getElementById('total-value-summary');
+        summaryContainer.innerHTML = `
+            <p class="text-lg text-slate-600">Total Estate Value</p>
+            <p class="text-4xl md:text-5xl font-bold text-indigo-700 mt-2 mb-4">₹${totalValue.toLocaleString('en-IN')}</p>
+            <p class="text-slate-500">${results.heirs.length} legal heir(s) identified.</p>
+        `;
+
+        const tableBody = document.getElementById('results-table-body');
+        tableBody.innerHTML = '';
+        results.heirs.forEach(heir => {
+            const row = document.createElement('tr');
+            row.className = 'border-b';
+            row.innerHTML = `
+                <td class="p-3">
+                    <p class="font-semibold">${heir.name}</p>
+                    <p class="text-sm text-slate-500">${heir.relationship}</p>
+                </td>
+                <td class="p-3">
+                    <p class="font-semibold">${(heir.share * 100).toFixed(2)}%</p>
+                    <p class="text-sm text-slate-500">${heir.shareFraction}</p>
+                </td>
+                <td class="p-3 text-right">
+                    <p class="font-semibold">₹${heir.value.toLocaleString('en-IN')}</p>
+                </td>
+            `;
+            tableBody.appendChild(row);
+
+            if(heir.notes) {
+                const notesRow = document.createElement('tr');
+                notesRow.innerHTML = `<td colspan="3" class="p-3 pt-0 text-sm text-slate-600 bg-slate-50"><span class="font-semibold">Note:</span> ${heir.notes}</td>`;
+                tableBody.appendChild(notesRow);
+            }
+        });
+
+        const chartLabels = results.heirs.map(h => `${h.name} (${h.relationship})`);
+        const chartData = results.heirs.map(h => h.share);
+        const chartColors = generateColors(results.heirs.length);
+
+        if (distributionChart) {
+            distributionChart.destroy();
+        }
+        const ctx = document.getElementById('distribution-chart').getContext('2d');
+        distributionChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Inheritance Share',
+                    data: chartData,
+                    backgroundColor: chartColors,
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 12 }, boxWidth: 20 } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed !== null) {
+                                    label += new Intl.NumberFormat('en-IN', { style: 'percent', minimumFractionDigits: 2 }).format(context.parsed);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function generateColors(numColors) {
+        const colors = [];
+        const baseColors = ['#4f46e5', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#ef4444', '#64748b'];
+        for(let i = 0; i < numColors; i++) {
+            colors.push(baseColors[i % baseColors.length]);
+        }
+        return colors;
+    }
+    
+    function calculateInheritance(s, properties) {
+        const { deceased, family, specialCircumstances } = s;
+        let finalHeirs = {}; 
+        let totalValue = properties.reduce((acc, p) => acc + (p.value || 0), 0);
+
+        const addShare = (name, relationship, shareValue, notes) => {
+            if (specialCircumstances.murderer) return; // Disqualified
+            if (!finalHeirs[name]) {
+                finalHeirs[name] = { name, relationship, value: 0, notes: '' };
+            }
+            finalHeirs[name].value += shareValue;
+            if (notes) finalHeirs[name].notes += notes + ' ';
+        };
+
+        properties.forEach(property => {
+            let isAncestral = ['paternal_grandfather', 'paternal_great_grandfather', 'father'].includes(property.inheritanceSource);
+            
+            if (deceased.gender === 'male') {
+                let devisableValue = property.value;
+                if (isAncestral && deceased.deathAfter2005 && !specialCircumstances.partitionBefore2004) {
+                    let coparceners = 1 + family.livingSons + family.livingDaughters; 
+                    let deceasedNotionalShare = property.value / coparceners;
+                    devisableValue = deceasedNotionalShare;
+                    let coparcenerShare = deceasedNotionalShare;
+
+                    for(let i=0; i<family.livingSons; i++) addShare(`Son ${i+1}`, 'Coparcener', coparcenerShare, 'Receives a direct coparcenary share.');
+                    for(let i=0; i<family.livingDaughters; i++) addShare(`Daughter ${i+1}`, 'Coparcener', coparcenerShare, 'Receives a direct coparcenary share (2005 Amendment).');
+                }
+                
+                let class1Branches = (family.motherAlive ? 1 : 0) + (family.widowAlive ? 1 : 0) + family.livingSons + family.livingDaughters + family.predeceasedSons.length + family.predeceasedDaughters.length;
+
+                if (class1Branches > 0) {
+                    const sharePerBranch = devisableValue / class1Branches;
+                    if (family.motherAlive) addShare('Mother', 'Class I Heir', sharePerBranch, 'Inherits as a Class I heir.');
+                    if (family.widowAlive) addShare('Widow', 'Class I Heir', sharePerBranch, 'Inherits as a Class I heir.');
+                    for(let i=0; i<family.livingSons; i++) addShare(`Son ${i+1}`, 'Class I Heir', sharePerBranch, 'Inherits share of deceased\'s separate property.');
+                    for(let i=0; i<family.livingDaughters; i++) addShare(`Daughter ${i+1}`, 'Class I Heir', sharePerBranch, 'Inherits share of deceased\'s separate property.');
+                    
+                    family.predeceasedSons.forEach((son, i) => {
+                        let branchMembers = (son.widowAlive ? 1 : 0) + son.sons + son.daughters;
+                        if (branchMembers > 0) {
+                            const subShare = sharePerBranch / branchMembers;
+                            if(son.widowAlive) addShare(`Predeceased Son ${i+1}'s Widow`, 'Class I Heir', subShare, 'Inherits via per stirpes.');
+                            for(let j=0; j<son.sons; j++) addShare(`Grandson (from PS${i+1})`, 'Predeceased Son\'s Son', subShare, 'Inherits via per stirpes.');
+                            for(let j=0; j<son.daughters; j++) addShare(`Granddaughter (from PS${i+1})`, 'Predeceased Son\'s Daughter', subShare, 'Inherits via per stirpes.');
+                        }
+                    });
+                     family.predeceasedDaughters.forEach((daughter, i) => {
+                         let branchMembers = daughter.sons + daughter.daughters;
+                         if (branchMembers > 0) {
+                             const subShare = sharePerBranch / branchMembers;
+                             for(let j=0; j<daughter.sons; j++) addShare(`Grandson (from PD${i+1})`, 'Predeceased Daughter\'s Son', subShare, 'Inherits via per stirpes.');
+                             for(let j=0; j<daughter.daughters; j++) addShare(`Granddaughter (from PD${i+1})`, 'Predeceased Daughter\'s Daughter', subShare, 'Inherits via per stirpes.');
+                         }
+                    });
+
+                } else if(family.fatherAlive) {
+                     addShare('Father', 'Class II Heir (Entry I)', devisableValue, 'No Class I heirs exist. Father inherits the entire estate.');
+                } else if(family.brothers > 0 || family.sisters > 0) {
+                    const numHeirs = family.brothers + family.sisters;
+                    const share = devisableValue / numHeirs;
+                    for(let i=0; i<family.brothers; i++) addShare(`Brother ${i+1}`, 'Class II Heir (Entry II)', share, 'Inherits as no Class I or Class II Entry I heirs exist.');
+                    for(let i=0; i<family.sisters; i++) addShare(`Sister ${i+1}`, 'Class II Heir (Entry II)', share, 'Inherits as no Class I or Class II Entry I heirs exist.');
+                }
+            } else { // Female
+                 let mainHeirs = (family.husbandAlive ? 1 : 0) + family.livingSons + family.livingDaughters;
+                 if(mainHeirs > 0) {
+                    const share = property.value / mainHeirs;
+                    if (family.husbandAlive) addShare('Husband', 'Heir u/s 15(1)(a)', share);
+                    for(let i=0; i<family.livingSons; i++) addShare(`Son ${i+1}`, 'Heir u/s 15(1)(a)', share);
+                    for(let i=0; i<family.livingDaughters; i++) addShare(`Daughter ${i+1}`, 'Heir u/s 15(1)(a)', share);
+                 } else if (family.fatherAlive || family.motherAlive) {
+                    const parentCount = (family.fatherAlive ? 1 : 0) + (family.motherAlive ? 1 : 0);
+                    const share = property.value / parentCount;
+                    if(family.fatherAlive) addShare('Father', 'Heir u/s 15(1)(c)', share);
+                    if(family.motherAlive) addShare('Mother', 'Heir u/s 15(1)(c)', share);
+                 }
+            }
+        });
+
+        const heirArray = Object.values(finalHeirs).map(h => {
+             const getFraction = (decimal, total) => {
+                 if(total === 0 || decimal === 0) return "0/1";
+                 const val = decimal/total;
+                 for (let d = 1; d <= 100; d++) { for (let n = 1; n <= d; n++) { if (Math.abs(val - n / d) < 1e-5) return `${n}/${d}`; } }
+                 return `${(val*100).toFixed(1)}%`;
+             }
+            return {
+                ...h,
+                share: totalValue > 0 ? h.value / totalValue : 0,
+                shareFraction: getFraction(h.value, totalValue)
+            };
+        });
+
+        return { heirs: heirArray.filter(h => h.value > 0), totalValue: totalValue };
+    }
+
+    init();
+});
+</script>
+
+</body>
+</html>

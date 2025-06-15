@@ -33,6 +33,7 @@
         .tab-btn:not(.active) { background-color: #e5e7eb; color: #4b5563; }
         .flowchart-box { background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; }
         .flowchart-arrow { text-align: center; font-size: 1.5rem; color: #9ca3af; margin: 0.5rem 0; }
+        .number-control button { width: 2.5rem; height: 2.5rem; }
         @media (min-width: 768px) { .chart-container { height: 400px; } .tab-btn { font-size: 1rem; } }
     </style>
 </head>
@@ -372,6 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let propertyIdCounter = 0;
     let distributionChart = null;
+    let quickCalcState = {};
 
     const screens = [
         document.getElementById('screen-1'),
@@ -402,10 +404,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const QUICK_CALC_RELATIVES = [
         {id: 'qc-sons', label: 'Sons'},
         {id: 'qc-daughters', label: 'Daughters'},
-        {id: 'qc-mother', label: 'Mother (0 or 1)'},
-        {id: 'qc-widow', label: 'Widow (0 or 1)'},
-        {id: 'qc-husband', label: 'Husband (0 or 1)'},
-        {id: 'qc-father', label: 'Father (0 or 1)'},
+        {id: 'qc-mother', label: 'Mother (0 or 1)', max: 1},
+        {id: 'qc-widow', label: 'Widow (0 or 1)', max: 1},
+        {id: 'qc-husband', label: 'Husband (0 or 1)', max: 1},
+        {id: 'qc-father', label: 'Father (0 or 1)', max: 1},
         {id: 'qc-brothers', label: 'Brothers'},
         {id: 'qc-sisters', label: 'Sisters'},
     ];
@@ -422,13 +424,35 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializeQuickCalculator() {
         const form = document.getElementById('quick-form');
         QUICK_CALC_RELATIVES.forEach(relative => {
+            quickCalcState[relative.id] = 0;
             const div = document.createElement('div');
             div.className = 'grid grid-cols-2 gap-2 items-center';
             div.innerHTML = `
                 <label for="${relative.id}" class="font-medium">${relative.label}:</label>
-                <input type="number" id="${relative.id}" min="0" value="0" max="${['mother', 'widow', 'husband', 'father'].some(s => relative.id.includes(s)) ? 1 : 100}" class="quick-calc-input w-full p-2 border rounded-lg text-right">
+                <div class="number-control flex items-center justify-end">
+                    <button data-id="${relative.id}" data-action="minus" class="quick-control-btn flex items-center justify-center p-2 border rounded-l-lg bg-slate-200 hover:bg-slate-300">-</button>
+                    <span id="${relative.id}-display" class="w-12 text-center p-2 border-t border-b bg-white">0</span>
+                    <button data-id="${relative.id}" data-action="plus" class="quick-control-btn flex items-center justify-center p-2 border rounded-r-lg bg-slate-200 hover:bg-slate-300">+</button>
+                </div>
             `;
             form.appendChild(div);
+        });
+
+        form.addEventListener('click', (e) => {
+            if(e.target.classList.contains('quick-control-btn')) {
+                const id = e.target.dataset.id;
+                const action = e.target.dataset.action;
+                const max = QUICK_CALC_RELATIVES.find(r => r.id === id).max || 100;
+                
+                let currentValue = quickCalcState[id];
+
+                if(action === 'plus' && currentValue < max) {
+                    quickCalcState[id]++;
+                } else if (action === 'minus' && currentValue > 0) {
+                    quickCalcState[id]--;
+                }
+                document.getElementById(`${id}-display`).textContent = quickCalcState[id];
+            }
         });
 
         document.getElementById('quick-calculate-btn').addEventListener('click', calculateQuickDistribution);
@@ -440,18 +464,12 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please select the gender of the deceased.');
             return;
         }
-
-        const getVal = id => parseInt(document.getElementById(id).value) || 0;
         
         let heirs = [];
         let totalHeirs = 0;
 
         if(gender === 'male') {
-            const mother = getVal('qc-mother');
-            const widow = getVal('qc-widow');
-            const sons = getVal('qc-sons');
-            const daughters = getVal('qc-daughters');
-            
+            const { 'qc-mother': mother, 'qc-widow': widow, 'qc-sons': sons, 'qc-daughters': daughters } = quickCalcState;
             totalHeirs = mother + widow + sons + daughters;
 
             if (totalHeirs > 0) {
@@ -460,13 +478,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(sons > 0) heirs.push({name: 'Sons', count: sons, rule: 'Sec. 8, HSA, 1956 (Class I)'});
                 if(daughters > 0) heirs.push({name: 'Daughters', count: daughters, rule: 'Sec. 8, HSA, 1956 (Class I)'});
             } else {
-                const father = getVal('qc-father');
+                const { 'qc-father': father } = quickCalcState;
                 if (father > 0) {
                     heirs.push({name: 'Father', count: father, rule: 'Sec. 8, HSA, 1956 (Class II, Entry I)'});
                     totalHeirs = father;
                 } else {
-                    const brothers = getVal('qc-brothers');
-                    const sisters = getVal('qc-sisters');
+                    const { 'qc-brothers': brothers, 'qc-sisters': sisters } = quickCalcState;
                     totalHeirs = brothers + sisters;
                     if(totalHeirs > 0) {
                         if(brothers > 0) heirs.push({name: 'Brothers', count: brothers, rule: 'Sec. 8, HSA, 1956 (Class II, Entry II)'});
@@ -475,19 +492,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         } else { // Female
-             const husband = getVal('qc-husband');
-             const sons = getVal('qc-sons');
-             const daughters = getVal('qc-daughters');
-
+             const { 'qc-husband': husband, 'qc-sons': sons, 'qc-daughters': daughters } = quickCalcState;
              totalHeirs = husband + sons + daughters;
              if (totalHeirs > 0) {
                 if(husband > 0) heirs.push({name: 'Husband', count: husband, rule: 'Sec. 15(1)(a), HSA, 1956'});
                 if(sons > 0) heirs.push({name: 'Sons', count: sons, rule: 'Sec. 15(1)(a), HSA, 1956'});
                 if(daughters > 0) heirs.push({name: 'Daughters', count: daughters, rule: 'Sec. 15(1)(a), HSA, 1956'});
              } else {
-                // Simplified for this tool: ignores property source.
-                const mother = getVal('qc-mother');
-                const father = getVal('qc-father');
+                const { 'qc-mother': mother, 'qc-father': father } = quickCalcState;
                 totalHeirs = mother + father;
                 if(totalHeirs > 0) {
                      if(mother > 0) heirs.push({name: 'Mother', count: mother, rule: 'Sec. 15(1)(c), HSA, 1956'});

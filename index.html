@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hindu Inheritance Calculator</title>
     <!-- Chosen Palette: Serene Neutrals & Soft Accents -->
-    <!-- Application Structure Plan: A tabbed SPA with two modes. 1) "Comprehensive Calculator": A multi-step wizard for detailed calculations including property values. 2) "Quick Calculation": A single-page tool to quickly determine share distribution without property details. This dual structure caters to both users needing a full financial breakdown and those seeking a quick understanding of the legal shares. -->
-    <!-- Visualization & Content Choices: The application uses a combination of interactive elements. For user input (Goal: Guide/Inform), it employs styled HTML forms, radio buttons, and number inputs with plus/minus controls. For property management (Goal: Organize), a dynamic list and inline form allows for clear inventory creation in the comprehensive tab. For the final output (Goal: Compare/Analyze), a dynamic donut chart and a detailed HTML table provide precise breakdowns. The "Quick" tab omits value-based calculations to focus purely on legal share percentages and fractions, with clear technical explanations for each heir's status. -->
+    <!-- Application Structure Plan: A tabbed SPA with three modes. 1) "Comprehensive Calculator": A multi-step wizard for detailed calculations including property values. 2) "Quick Calculation": A single-page tool to quickly determine share distribution. 3) "How It Works": A visual flowchart explaining the legal logic. This structure caters to users needing a full financial breakdown, a quick answer, or an educational overview. -->
+    <!-- Visualization & Content Choices: The application uses a combination of interactive elements. For user input (Goal: Guide/Inform), it employs styled HTML forms, radio buttons, and number inputs with plus/minus controls. The "How It Works" tab uses structured HTML and Tailwind CSS to create a flowchart, visually representing the complex succession rules without using images. For the final output (Goal: Compare/Analyze), a dynamic donut chart and a detailed HTML table provide precise breakdowns with clear technical explanations for each heir's status. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -75,47 +75,6 @@
             background-color: #EFF6FF;
             box-shadow: 0 0 0 2px #4A90E2;
         }
-        .help-icon {
-            cursor: pointer;
-            width: 1.25rem;
-            height: 1.25rem;
-            color: #9CA3AF;
-            margin-left: 0.5rem;
-            transition: color 0.2s;
-        }
-        .help-icon:hover {
-            color: #4A90E2;
-        }
-        .tooltip {
-            position: absolute;
-            background-color: #1F2937;
-            color: white;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            z-index: 10;
-            width: 280px;
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.3s;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        .tooltip::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #1F2937 transparent transparent transparent;
-        }
-        .help-container:hover .tooltip {
-            visibility: visible;
-            opacity: 1;
-        }
         .progress-bar {
             width: 100%;
             background-color: #E5E7EB;
@@ -169,19 +128,72 @@
             border-bottom-color: #4A90E2;
             font-weight: 600;
         }
+        .flow-node {
+            border: 2px solid #A0AEC0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            background-color: white;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        .flow-node.decision {
+            border-color: #F5A623;
+            background-color: #FEF3C7;
+        }
+        .flow-node.process {
+            border-color: #4A90E2;
+            background-color: #EFF6FF;
+        }
+        .flow-node.result {
+            border-color: #50E3C2;
+            background-color: #ECFDF5;
+        }
+        .flow-arrow {
+            position: relative;
+            width: 2px;
+            background-color: #9CA3AF;
+            margin: 0.5rem auto;
+            flex-grow: 1;
+        }
+        .flow-arrow::after {
+            content: '';
+            position: absolute;
+            left: -5px;
+            bottom: -1px;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid #9CA3AF;
+        }
+        .flow-arrow-horizontal {
+             position: relative;
+            height: 2px;
+            background-color: #9CA3AF;
+            margin: auto 0.5rem;
+            flex-grow: 1;
+        }
+        .flow-arrow-horizontal::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            right: -1px;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+            border-left: 8px solid #9CA3AF;
+        }
     </style>
 </head>
 <body class="antialiased">
-    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Hindu Inheritance Calculator</h1>
             <p class="mt-2 text-lg text-gray-600">An informational tool for intestate succession under the Hindu Succession Act, 1956.</p>
         </header>
 
         <div class="mb-6 border-b border-gray-200">
-            <nav class="flex space-x-4" aria-label="Tabs">
+            <nav class="flex space-x-2 md:space-x-4" aria-label="Tabs">
                 <button id="comprehensive-tab" class="tab-btn active" role="tab" aria-selected="true" aria-controls="comprehensive-panel">Comprehensive Calculator</button>
                 <button id="quick-tab" class="tab-btn" role="tab" aria-selected="false" aria-controls="quick-panel">Quick Calculation</button>
+                <button id="how-it-works-tab" class="tab-btn" role="tab" aria-selected="false" aria-controls="how-it-works-panel">How It Works</button>
             </nav>
         </div>
 
@@ -201,20 +213,7 @@
                 <div id="step-1" class="step-card p-6 md:p-8 hidden">
                     <h2 class="text-2xl font-semibold mb-6 text-center">About the Deceased</h2>
                     <div class="space-y-8">
-                        <div>
-                            <label class="font-semibold text-gray-800">What was the deceased's religion?</label>
-                            <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                <input type="radio" name="religion" id="religion-hindu" value="hindu" class="hidden">
-                                <label for="religion-hindu" class="radio-label text-center">Hindu</label>
-                                <input type="radio" name="religion" id="religion-buddhist" value="buddhist" class="hidden">
-                                <label for="religion-buddhist" class="radio-label text-center">Buddhist</label>
-                                <input type="radio" name="religion" id="religion-jain" value="jain" class="hidden">
-                                <label for="religion-jain" class="radio-label text-center">Jain</label>
-                                <input type="radio" name="religion" id="religion-sikh" value="sikh" class="hidden">
-                                <label for="religion-sikh" class="radio-label text-center">Sikh</label>
-                            </div>
-                        </div>
-                        <div>
+                         <div>
                             <label class="font-semibold text-gray-800">What was the gender of the deceased?</label>
                             <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <input type="radio" name="gender" id="gender-male" value="male" class="hidden">
@@ -261,7 +260,7 @@
                         </button>
                     </div>
                     <div id="partition-question-container" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg hidden">
-                        <label class="font-semibold text-gray-800 flex items-center">Was a formal partition of any ancestral family property completed and legally registered (or finalized by a court decree) before December 20, 2004?</label>
+                        <label class="font-semibold text-gray-800 flex items-center">Was a formal partition of any ancestral family property completed and legally registered before December 20, 2004?</label>
                         <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="radio" name="partition" id="partition-yes" value="yes" class="hidden">
                             <label for="partition-yes" class="radio-label text-center">Yes</label>
@@ -321,6 +320,76 @@
              </div>
         </div>
         
+        <div id="how-it-works-panel" class="hidden" role="tabpanel">
+            <div class="step-card p-6 md:p-8">
+                <h2 class="text-2xl font-semibold mb-6 text-center">How the Calculation Works</h2>
+                <p class="text-center text-gray-600 mb-8">The Hindu Succession Act, 1956 lays down a clear hierarchy for property distribution. The process depends entirely on the gender of the deceased.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Male Flowchart -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-center text-blue-600">If the Deceased is MALE</h3>
+                        <div class="flex flex-col items-center">
+                            <div class="flow-node process w-full">Identify Deceased's Gender: Male</div>
+                            <div class="flow-arrow h-6"></div>
+                            <div class="flow-node decision w-full">Are there any Class I Heirs?</div>
+                            <div class="flex w-full mt-4">
+                                <div class="flex-1 flex flex-col items-center px-2">
+                                    <div class="font-bold text-green-600">YES</div>
+                                    <div class="flow-arrow h-4"></div>
+                                    <div class="flow-node result w-full text-sm">Property is divided ONLY among Class I heirs (Mother, Widow, Sons, Daughters, and branches of predeceased children). Each takes one equal share.</div>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center px-2">
+                                    <div class="font-bold text-red-600">NO</div>
+                                    <div class="flow-arrow h-4"></div>
+                                     <div class="flow-node decision w-full text-sm">Is the Father (Class II, Entry I) alive?</div>
+                                     <div class="flex w-full mt-4">
+                                        <div class="flex-1 flex flex-col items-center px-1">
+                                            <div class="font-bold text-green-600 text-xs">YES</div>
+                                            <div class="flow-arrow h-2"></div>
+                                            <div class="flow-node result w-full text-xs">Father inherits 100% of the property.</div>
+                                        </div>
+                                         <div class="flex-1 flex flex-col items-center px-1">
+                                            <div class="font-bold text-red-600 text-xs">NO</div>
+                                            <div class="flow-arrow h-2"></div>
+                                            <div class="flow-node result w-full text-xs">Property goes to Class II, Entry II heirs (Brother, Sister, etc.) who share equally.</div>
+                                        </div>
+                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Female Flowchart -->
+                     <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-center text-pink-600">If the Deceased is FEMALE</h3>
+                        <div class="flex flex-col items-center">
+                            <div class="flow-node process w-full">Identify Deceased's Gender: Female</div>
+                            <div class="flow-arrow h-6"></div>
+                            <div class="flow-node decision w-full">How was the property acquired?</div>
+                             <div class="flow-arrow h-6"></div>
+                            <div class="flow-node decision w-full">Did she have any children or children of predeceased children?</div>
+                             <div class="flex w-full mt-4">
+                                <div class="flex-1 flex flex-col items-center px-2">
+                                    <div class="font-bold text-green-600">YES</div>
+                                    <div class="flow-arrow h-4"></div>
+                                    <div class="flow-node result w-full text-sm">ALL property is divided equally among her Husband and her Children (and their branches).</div>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center px-2">
+                                    <div class="font-bold text-red-600">NO</div>
+                                    <div class="flow-arrow h-4"></div>
+                                     <div class="flow-node result w-full text-sm">
+                                        <p><span class="font-bold">Self-acquired property</span> goes to her husband's heirs.</p>
+                                        <p class="mt-2"><span class="font-bold">Property inherited from parents</span> reverts to her father's heirs.</p>
+                                        <p class="mt-2"><span class="font-bold">Property inherited from husband/in-laws</span> reverts to her husband's heirs.</p>
+                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Message Modal -->
         <div id="message-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden items-center justify-center z-50">
             <div class="relative mx-auto p-5 border w-11/12 md:w-1/2 lg:w-1/3 shadow-lg rounded-md bg-white">
@@ -369,7 +438,6 @@ document.addEventListener('DOMContentLoaded', () => {
         progressPercent: document.getElementById('progress-percent'),
         progressBarInner: document.getElementById('progress-bar-inner'),
         
-        religionRadios: document.querySelectorAll('input[name="religion"]'),
         genderRadios: document.querySelectorAll('input[name="gender"]'),
         deathDateRadios: document.querySelectorAll('input[name="death_date_period"]'),
         pregnantRadios: document.querySelectorAll('input[name="pregnant"]'),
@@ -388,8 +456,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         comprehensiveTab: document.getElementById('comprehensive-tab'),
         quickTab: document.getElementById('quick-tab'),
+        howItWorksTab: document.getElementById('how-it-works-tab'),
         comprehensivePanel: document.getElementById('comprehensive-panel'),
         quickPanel: document.getElementById('quick-panel'),
+        howItWorksPanel: document.getElementById('how-it-works-panel'),
         
         quickGenderRadios: document.querySelectorAll('input[name="quick_gender"]'),
         quickHeirFormContainer: document.getElementById('quick-heir-form-container'),
@@ -407,20 +477,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tab Switching Logic
     elements.comprehensiveTab.addEventListener('click', () => switchTab('comprehensive'));
     elements.quickTab.addEventListener('click', () => switchTab('quick'));
+    elements.howItWorksTab.addEventListener('click', () => switchTab('how-it-works'));
 
     function switchTab(tabName) {
-        if (tabName === 'comprehensive') {
-            elements.comprehensiveTab.classList.add('active');
-            elements.quickTab.classList.remove('active');
-            elements.comprehensivePanel.classList.remove('hidden');
-            elements.quickPanel.classList.add('hidden');
-        } else {
-            elements.quickTab.classList.add('active');
-            elements.comprehensiveTab.classList.remove('active');
-            elements.quickPanel.classList.remove('hidden');
-            elements.comprehensivePanel.classList.add('hidden');
+        const tabs = {
+            'comprehensive': { btn: elements.comprehensiveTab, panel: elements.comprehensivePanel },
+            'quick': { btn: elements.quickTab, panel: elements.quickPanel },
+            'how-it-works': { btn: elements.howItWorksTab, panel: elements.howItWorksPanel }
+        };
+
+        for (const key in tabs) {
+            const { btn, panel } = tabs[key];
+            if (btn && panel) { // Check if elements exist before using them
+                if (key === tabName) {
+                    btn.classList.add('active');
+                    panel.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('active');
+                    panel.classList.add('hidden');
+                }
+            }
         }
     }
+
 
     // Comprehensive Calculator Logic
     function updateProgressBar() {
@@ -464,30 +543,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo(0, 0);
     }
     
-    function showMessage(title, message, isError = true) {
-        elements.modalTitle.textContent = title;
-        elements.modalMessage.textContent = message;
-        elements.modalIcon.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full';
-        if(isError) {
-             elements.modalIcon.classList.add('bg-red-100');
-             elements.modalIcon.innerHTML = `<svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>`;
-        } else {
-             elements.modalIcon.classList.add('bg-blue-100');
-             elements.modalIcon.innerHTML = `<svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>`;
-        }
-        elements.messageModal.classList.remove('hidden');
-        elements.messageModal.classList.add('flex');
-    }
-
-    elements.modalCloseBtn.addEventListener('click', () => {
-        elements.messageModal.classList.add('hidden');
-        elements.messageModal.classList.remove('flex');
-    });
-    
     // Step 1: Deceased Profile
     function checkStep1Validity() {
-        return !!document.querySelector('input[name="religion"]:checked') &&
-               !!document.querySelector('input[name="gender"]:checked') &&
+        return !!document.querySelector('input[name="gender"]:checked') &&
                !!document.querySelector('input[name="death_date_period"]:checked') &&
                !!document.querySelector('input[name="pregnant"]:checked');
     }
@@ -836,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        if (deceased.childInWomb) {
+        if (deceased && deceased.childInWomb) {
             class1Heirs.push({ type: 'Unborn Child', individualNum: 1, shares: 1, provisional: true });
         }
         
@@ -905,11 +963,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function calculateFemaleShares(stateObj) {
         const { heirs, deceased, properties } = stateObj;
         const results = {};
-        const props = properties || [{value: 0, source: 'general'}];
+        const props = properties && properties.length > 0 ? properties : [{value: 0, source: 'general'}];
 
         props.forEach((prop, index) => {
             const calculationLog = [];
-            const hasIssue = (heirs.sons.living > 0 || heirs.daughters.living > 0) || deceased.childInWomb;
+            const hasIssue = (heirs.sons.living > 0 || heirs.daughters.living > 0) || (deceased && deceased.childInWomb);
 
             if (prop.source === 'from_parents' && !hasIssue) {
                  calculationLog.push({ name: "Heirs of Father", shareFraction: new Fraction(1), value: prop.value, reason: "Property inherited from parents reverts to father's heirs if the female dies without issue, per Sec. 15(2)(a) of the HSA."});
@@ -920,7 +978,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (heirs.husband > 0) primaryHeirs.push({type: 'Husband', count: 1});
                  for(let i=0; i<heirs.sons.living; i++) primaryHeirs.push({type: 'Son', count: 1, individualNum: i+1});
                  for(let i=0; i<heirs.daughters.living; i++) primaryHeirs.push({type: 'Daughter', count: 1, individualNum: i+1});
-                 if (deceased.childInWomb) primaryHeirs.push({type: 'Unborn Child', count: 1, provisional: true});
+                 if (deceased && deceased.childInWomb) primaryHeirs.push({type: 'Unborn Child', count: 1, provisional: true});
                  
                  const totalShares = primaryHeirs.length;
 
@@ -943,6 +1001,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         return results;
     }
+
     
     // Comprehensive Results Rendering
     function renderResults() {
@@ -966,7 +1025,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let chartHtml = showValue ? `<p class="text-center text-gray-500 my-4">No heirs with a share to display.</p>` : '';
             if(showValue && inheritingHeirs.length > 0) {
                 chartHtml = `<div class="chart-container my-6">
-                                <canvas id="chart-${index}"></canvas>
+                                <canvas id="chart-${container.id}-${index}"></canvas>
                              </div>`;
             }
 
@@ -978,7 +1037,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <thead class="bg-gray-100">
                             <tr>
                                 <th class="p-3 font-semibold text-sm text-left">Heir</th>
-                                <th class="p-3 font-semibold text-sm text-center">Share (Fraction)</th>
                                 <th class="p-3 font-semibold text-sm text-center">Share (%)</th>
                                 ${showValue ? `<th class="p-3 font-semibold text-sm text-right">Value (₹)</th>` : ''}
                             </tr>
@@ -990,7 +1048,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <p class="font-semibold capitalize">${h.name} ${h.provisional ? '<span class="text-xs text-red-500">(Provisional)</span>' : ''}</p>
                                     <p class="text-xs text-gray-600 italic mt-1">${h.reason}</p>
                                 </td>
-                                <td class="p-3 font-mono text-center">${h.shareFraction.n > 0 ? h.shareFraction.toFraction(true) : 'Zero'}</td>
                                 <td class="p-3 font-mono text-center">${h.shareFraction.n > 0 ? (h.shareFraction.valueOf() * 100).toFixed(2) + '%' : '0.00%'}</td>
                                 ${showValue ? `<td class="p-3 text-right font-medium">₹${h.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>` : ''}
                             </tr>`).join('')}
@@ -1009,7 +1066,9 @@ document.addEventListener('DOMContentLoaded', () => {
             container.appendChild(section);
 
             if (showValue && inheritingHeirs.length > 0) {
-                 const ctx = document.getElementById(`chart-${index}`).getContext('2d');
+                 const chartId = `chart-${container.id}-${index}`;
+                 section.querySelector('canvas').id = chartId;
+                 const ctx = document.getElementById(chartId).getContext('2d');
                  new Chart(ctx, {
                     type: 'doughnut',
                     data: { labels: inheritingHeirs.map(h => h.name), datasets: [{ data: inheritingHeirs.map(h => h.shareFraction.valueOf() * 100), backgroundColor: ['#4A90E2', '#50E3C2', '#F5A623', '#BD10E0', '#7ED321', '#417505', '#9013FE', '#D0021B', '#F8E71C', '#B8E986'], borderColor: '#FDFBF7', borderWidth: 3 }] },
@@ -1019,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (isMale || !showValue) {
-            renderSection('Overall Distribution', stateObj.results.all, 0);
+            renderSection('Overall Distribution', stateObj.results.all, 'all');
         } else {
             Object.keys(stateObj.results).forEach(propIndex => {
                 const title = `Distribution of Property #${parseInt(propIndex) + 1}`;
